@@ -1,31 +1,51 @@
-import speech_recognition as sr
+import os
+
 import pyttsx3
-import open_ai_key as ../.env
+import openai
+
+import speech_recognition as sr
 
 r = sr.Recognizer()
 tts_engine = pyttsx3.init()
 
+openai_api_key = os.getenv("OPENAI_API_KEY")
 voices = tts_engine.getProperty("voices")
-tts_engine.setProperty("voice", voices[2].id)
+tts_engine.setProperty("voice", voices[0].id)
 
-# tts_engine.say("hello this is tts")
-# tts_engine.runAndWait()
-
+human_words = []
+ai_words = []
 
 with sr.Microphone() as source:
     r.adjust_for_ambient_noise(source)
+    chat_history = ""
+    print("Starting AI bot now...\n")
     while True:
-        audio = r.listen(source)
-        words = r.recognize_google(audio)
+        try:
+            audio = r.listen(source)
+        except:
+            audio = None
+        try:
+            words = r.recognize_google(audio)
+        except:
+            words = None
         if words:
-            print(words)
-            if words.lower() == "hello":
-                tts_engine.say("say something")
-                tts_engine.runAndWait()
-                audio = r.listen(source)
-                words = r.recognize_google(audio)
-                if words:
-                    tts_engine.say(words)
-                    tts_engine.runAndWait()
-            elif words == "stop":
-                break
+            print(f"You: {words}")
+            human_words.append(words)
+            response = openai.Completion.create(
+                engine="davinci",
+                prompt=f"The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, and very friendly.\n\nHuman: Hello, who are you?\nAI: I am an AI created by OpenAI. How can I help you today?\n{chat_history}Human: {words}\nAI:",
+                temperature=0.9,
+                max_tokens=150,
+                top_p=1,
+                frequency_penalty=0.0,
+                presence_penalty=0.6,
+                stop=["\n", " Human:", " AI:"],
+            )
+            ai_words.append(response["choices"][0]["text"])
+            human_words, ai_words = human_words[-5:], ai_words[-5:]
+            chat_history = "".join(
+                f"Human:{human}\nAI:{ai}\n" for human, ai in zip(human_words, ai_words)
+            )
+            print(f'CPU:{response["choices"][0]["text"]}')
+            tts_engine.say(response["choices"][0]["text"])
+            tts_engine.runAndWait()
