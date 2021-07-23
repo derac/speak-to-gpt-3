@@ -14,21 +14,15 @@ tts_engine.setProperty("voice", voices[0].id)
 
 human_words = []
 ai_words = []
+chat_history = ""
 
 with sr.Microphone() as source:
     r.adjust_for_ambient_noise(source)
-    chat_history = ""
-    print("Starting AI bot now...\n")
+    print("Starting talking to your computer now...\n")
     while True:
         try:
             audio = r.listen(source)
-        except:
-            audio = None
-        try:
             words = r.recognize_google(audio)
-        except:
-            words = None
-        if words:
             print(f"You: {words}")
             human_words.append(words)
             response = openai.Completion.create(
@@ -49,3 +43,5 @@ with sr.Microphone() as source:
             print(f'CPU:{response["choices"][0]["text"]}')
             tts_engine.say(response["choices"][0]["text"])
             tts_engine.runAndWait()
+        except:
+            ...
