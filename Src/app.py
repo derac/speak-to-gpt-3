@@ -18,7 +18,7 @@ chat_history = ""
 
 with sr.Microphone() as source:
     r.adjust_for_ambient_noise(source)
-    print("Starting talking to your computer now...\n")
+    print("Start talking to your computer now...\n")
     while True:
         try:
             audio = r.listen(source)
